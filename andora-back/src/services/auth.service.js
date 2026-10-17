@@ -1,11 +1,12 @@
 import { pool } from '../config/database.js';
 import bcrypt from 'bcryptjs'; // <-- Deve ser bcryptjs
 import jwt from 'jsonwebtoken';
+import { publicUser } from './user.service.js';
 
 export const AuthService = {
   async login(email, senha) {
     const sql = `
-      SELECT usr_codigo AS id, usr_nome AS nome, usr_email AS email, usr_senha, usr_cargo AS cargo, usr_foto AS foto
+      SELECT *
       FROM tb_user 
       WHERE usr_email = ?
     `;
@@ -23,13 +24,11 @@ export const AuthService = {
 
     const secret = process.env.JWT_SECRET || 'chave_super_secreta_andora';
     const token = jwt.sign(
-      { id: utilizador.id, cargo: utilizador.cargo },
+      { id: utilizador.usr_codigo, cargo: utilizador.usr_cargo },
       secret,
       { expiresIn: '24h' }
     );
 
-    delete utilizador.usr_senha;
-
-    return { token, utilizador };
+    return { token, utilizador: publicUser(utilizador) };
   }
 };

@@ -42,3 +42,32 @@ FAQ usa JSON e mantém os campos originais `pergunta`, `resposta`, `ordem` e `st
 Uma tradução omitida não é apagada em uma edição. Enviar `""` ou `null` limpa explicitamente aquela tradução. A API continua aceitando gravações em português no esquema antigo quando nenhum campo inglês é enviado.
 
 Confira o resultado após salvar em `GET /api/site` ou `GET /api/faqs`. Os campos normalizados retornados são os mesmos que o site utiliza ao alternar para EN. Se os campos acima não estiverem no corpo enviado pelo painel, será necessário conferir o código desse formulário; a API não pode gravar um valor que não recebeu.
+
+## Usuários e dados para a sidebar
+
+O cadastro de usuário também aceita `cargo_ingles` e `bio_ingles`, ou os nomes completos `usr_cargo_ingles` e `usr_bio_ingles`. O envio da foto permanece no campo `foto`. Os demais campos e a autenticação existente são preservados.
+
+Para aplicar esta correção, atualize **também** estes dois arquivos na sua API, preservando as atualizações anteriores de Hero/About/FAQ:
+
+- `andora-back/src/services/user.service.js`
+- `andora-back/src/services/auth.service.js`
+
+O serviço de autenticação importa a função de perfil do serviço de usuário; copie os dois arquivos juntos e reinicie a API.
+
+Cadastro, listagem e login agora retornam os mesmos dados públicos de perfil:
+
+| Campo | Informação |
+| --- | --- |
+| `id`, `nome`, `email` | Identificação do usuário |
+| `telefone` | Telefone cadastrado |
+| `cargo`, `cargo_ingles` | Cargo em PT/EN |
+| `bio`, `bio_ingles` | Biografia em PT/EN |
+| `foto` | Nome do arquivo da foto em `/uploads/` |
+
+No login, o perfil permanece em `resposta.utilizador` e o token em `resposta.token`. O hash da senha e outras colunas internas não fazem parte do perfil público. O conteúdo do JWT e a validação de credenciais mantêm o comportamento existente.
+
+A sidebar deve usar o perfil do usuário autenticado, escolher os campos ingleses ao selecionar EN (com retorno aos campos PT se estiverem vazios) e resolver a foto na raiz da API, em `/uploads/`. Se o painel guarda o perfil no navegador, saia e entre novamente após atualizar a API para obter os novos campos.
+
+O código da sidebar não está presente nos repositórios disponíveis nesta tarefa. Estes ajustes preparam seus dados; a ligação e a exibição do componente ainda precisam ser conferidas no código do painel.
+
+Verificação do perfil público: `node --test tests/user-profile.test.js` dentro de `andora-back`. O cadastro e o login também foram validados por requisições reais contra MySQL temporário com o modelo bilíngue e contra o esquema antigo sem colunas inglesas.

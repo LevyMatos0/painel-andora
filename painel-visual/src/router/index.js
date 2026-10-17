@@ -36,16 +36,10 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
   const token = sessionToken();
-
-  if (to.meta.requerAutenticacao && !token) {
-    next("/");
-  } else if (to.path === "/" && token) {
-    next("/dashboard");
-  } else {
-    next();
-  }
+  if (to.meta.requerAutenticacao && !token) return "/";
+  if (to.path === "/" && token) return "/dashboard";
 });
 
 export default router;

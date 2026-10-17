@@ -9,6 +9,8 @@ const router = Router();
 router.use(verificarToken);
 
 router.get('/', UserController.listar);
+router.get('/:id', UserController.validarProprioPerfil, UserController.perfil);
+router.put('/:id/senha', UserController.validarProprioPerfil, UserController.alterarSenha);
 router.post('/', upload.single('foto'), UserController.criar);
 router.put('/:id', UserController.validarProprioPerfil, upload.single('foto'), UserController.atualizarPerfil);
 router.patch('/:id', UserController.validarProprioPerfil, upload.single('foto'), UserController.atualizarPerfil);

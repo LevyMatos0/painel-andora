@@ -11,6 +11,18 @@ function profileResponse(usuario) {
 }
 
 export const UserController = {
+  async alterarSenha(req, res, next) {
+    try {
+      const dados = req.body || {};
+      const updated = await UserService.alterarSenha(req.utilizador.id, dados.senhaAtual, dados.novaSenha);
+      if (!updated) return res.status(404).json({ mensagem: 'Usuário não encontrado.' });
+      return res.json({ mensagem: 'Senha atualizada com sucesso.' });
+    } catch (erro) {
+      if (erro.status === 400) return res.status(400).json({ mensagem: erro.message });
+      next(erro);
+    }
+  },
+
   validarProprioPerfil(req, res, next) {
     if (Number(req.params.id) !== Number(req.utilizador.id)) {
       return res.status(403).json({ mensagem: 'Só pode atualizar o seu próprio perfil.' });
@@ -21,6 +33,7 @@ export const UserController = {
   async atualizarPerfil(req, res, next) {
     try {
       const dados = { ...req.body };
+      if ([true, 1, 'true', '1'].includes(dados.remover_foto)) dados.foto = null;
       if (req.file) dados.foto = req.file.filename;
       const usuario = await UserService.atualizar(req.utilizador.id, dados);
       if (!usuario) return res.status(404).json({ mensagem: 'Usuário não encontrado.' });

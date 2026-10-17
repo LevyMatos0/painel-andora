@@ -64,6 +64,18 @@ export const UserService = {
     return res.affectedRows > 0;
   },
 
+  async alterarSenha(id, senhaAtual, novaSenha) {
+    if (typeof senhaAtual !== 'string' || !senhaAtual || typeof novaSenha !== 'string' || !novaSenha) {
+      throw badRequest('Informe a senha atual e a nova senha.');
+    }
+    const [rows] = await pool.query('SELECT usr_senha FROM tb_user WHERE usr_codigo = ?', [id]);
+    if (!rows[0]) return false;
+    if (!await bcrypt.compare(senhaAtual, rows[0].usr_senha)) throw badRequest('A senha atual está incorreta.');
+    const hash = await bcrypt.hash(novaSenha, 10);
+    await pool.query('UPDATE tb_user SET usr_senha = ? WHERE usr_codigo = ?', [hash, id]);
+    return true;
+  },
+
   async atualizar(id, dados) {
     const fields = pickFields(dados, {
       usr_nome: ['nome', 'usr_nome'],

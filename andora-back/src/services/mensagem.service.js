@@ -36,6 +36,7 @@ export const MensagemService = {
       id: res.insertId,
       nome: dados.nome,
       email: dados.email,
+      telefone: dados.telefone || null,
       assunto: dados.assunto,
       conteudo: dados.conteudo,
       status: 'nova'

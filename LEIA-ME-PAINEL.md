@@ -49,3 +49,7 @@ API: porta **3000**. Painel: **5173**. Site público, quando iniciado separadame
 Build de produção do painel e seis testes existentes da API passaram. Testes em navegador com a API real e um MySQL temporário separado validaram login; perfil sem ID no cache; persistência PT/EN; upload e remoção de foto; sidebar; senha; cadastro de serviço/equipe em inglês; dashboard; mensagens; falhas visíveis; navegação e largura das seis telas em 320, 390, 768 e 1440 px.
 
 Os iniciadores `.cmd` são atalhos para os comandos acima. Foram escritos para Windows; a validação automatizada foi executada em Linux, com Chromium, Node e MySQL. Seu banco local não foi acessado nem modificado nesses testes.
+
+## Receber contatos no Gmail
+
+A API pode avisar por e-mail quando um contato é recebido pelo site. Veja **[CONTATO-GMAIL.md](andora-back/CONTATO-GMAIL.md)** para ativar o envio para `tcc2026clm@gmail.com` com uma senha de app do Google. Após atualizar esta API, execute `npm ci` em `andora-back` para instalar a dependência de e-mail, mesmo se já houver `node_modules`.

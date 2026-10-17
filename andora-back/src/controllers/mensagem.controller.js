@@ -1,4 +1,6 @@
 import { MensagemService } from '../services/mensagem.service.js';
+import { notifyContact } from '../services/contact-mail.service.js';
+import { contactInput } from '../utils/contact-input.js';
 
 export const MensagemController = {
   async listar(req, res, next) {
@@ -12,15 +14,13 @@ export const MensagemController = {
 
   async criar(req, res, next) {
     try {
-      const { nome, email, assunto, conteudo, telefone } = req.body;
-
-      if (!nome || !email || !assunto || !conteudo) {
-        return res.status(400).json({ mensagem: 'Nome, email, assunto e conteúdo são obrigatórios.' });
-      }
-
-      const novaMensagem = await MensagemService.criar({ nome, email, assunto, conteudo, telefone });
-      return res.status(201).json(novaMensagem);
+      const dados = contactInput(req.body);
+      // Persist first: a Gmail outage must not lose or duplicate the contact.
+      const novaMensagem = await MensagemService.criar(dados);
+      const notificacaoEmail = await notifyContact(novaMensagem);
+      return res.status(201).json({ ...novaMensagem, notificacaoEmail });
     } catch (erro) {
+      if (erro.status === 400) return res.status(400).json({ mensagem: erro.message });
       next(erro);
     }
   },

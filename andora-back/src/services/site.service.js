@@ -9,7 +9,9 @@ export const SiteService = {
       if (hero.length > 0) {
         site.hero = { 
           titulo: hero[0].her_titulo, 
+          titulo_ingles: hero[0].her_titulo_ingles,
           descricao: hero[0].her_descricao, 
+          descricao_ingles: hero[0].her_descricao_ingles,
           imagem: hero[0].her_imagem 
         };
       }
@@ -18,7 +20,9 @@ export const SiteService = {
       if (about.length > 0) {
         site.sobre = { 
           titulo: about[0].abt_titulo, 
+          titulo_ingles: about[0].abt_titulo_ingles,
           texto: about[0].abt_texto, 
+          texto_ingles: about[0].abt_texto_ingles,
           imagem: about[0].abt_imagem 
         };
       }

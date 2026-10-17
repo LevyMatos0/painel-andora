@@ -3,13 +3,7 @@ import { pool } from '../config/database.js';
 export const FaqService = {
   async listarTodos(somenteAtivos = false) {
     let sql = `
-      SELECT 
-        faq_codigo AS id,
-        faq_pergunta AS pergunta,
-        faq_resposta AS resposta,
-        faq_ordem AS ordem,
-        faq_status AS status
-      FROM tb_faq
+      SELECT * FROM tb_faq
     `;
     
     if (somenteAtivos) {
@@ -19,7 +13,17 @@ export const FaqService = {
     sql += ' ORDER BY faq_ordem ASC, faq_codigo DESC';
 
     const [linhas] = await pool.query(sql);
-    return linhas;
+    // Keep the public aliases and expose optional translations without requiring
+    // the new columns in older development databases.
+    return linhas.map(faq => ({
+      id: faq.faq_codigo,
+      pergunta: faq.faq_pergunta,
+      pergunta_ingles: faq.faq_pergunta_ingles,
+      resposta: faq.faq_resposta,
+      resposta_ingles: faq.faq_resposta_ingles,
+      ordem: faq.faq_ordem,
+      status: faq.faq_status,
+    }));
   },
 
   async criar(dados) {

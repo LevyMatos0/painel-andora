@@ -1,5 +1,18 @@
 import { pool } from '../config/database.js';
 
+const sections = {
+  hero: {
+    table: 'tb_hero', id: 'her_codigo', image: 'her_imagem',
+    fields: { titulo: 'her_titulo', descricao: 'her_descricao' },
+    translations: { titulo_ingles: 'her_titulo_ingles', descricao_ingles: 'her_descricao_ingles' },
+  },
+  sobre: {
+    table: 'tb_about', id: 'abt_codigo', image: 'abt_imagem',
+    fields: { titulo: 'abt_titulo', texto: 'abt_texto' },
+    translations: { titulo_ingles: 'abt_titulo_ingles', texto_ingles: 'abt_texto_ingles' },
+  },
+};
+
 export const SiteService = {
   async buscarTodos() {
     const site = { hero: {}, sobre: {}, contato: {} };
@@ -44,44 +57,35 @@ export const SiteService = {
   },
 
   async salvarSecao(secao, dados) {
-    if (secao === 'hero') {
-      const [existe] = await pool.query('SELECT * FROM tb_hero LIMIT 1');
-      
-      if (existe.length === 0) {
-        await pool.query(
-          'INSERT INTO tb_hero (her_titulo, her_descricao, her_imagem) VALUES (?, ?, ?)', 
-          [dados.titulo, dados.descricao, dados.imagem || null]
-        );
-      } else {
-        let sql = 'UPDATE tb_hero SET her_titulo = ?, her_descricao = ?';
-        const params = [dados.titulo, dados.descricao];
-        
-        if (dados.imagem) {
-          sql += ', her_imagem = ?';
-          params.push(dados.imagem);
-        }
-        await pool.query(sql, params);
+    if (secao === 'hero' || secao === 'sobre') {
+      const config = sections[secao];
+      const [existe] = await pool.query(`SELECT * FROM ${config.table} LIMIT 1`);
+      const values = Object.fromEntries(
+        Object.entries(config.fields).map(([field, column]) => [column, dados[field]])
+      );
+
+      // Missing translations must not erase values saved by another panel version.
+      // Accept public API names as well as the exact column names from the SQL.
+      for (const [field, column] of Object.entries(config.translations)) {
+        const key = Object.hasOwn(dados, field) ? field : column;
+        if (Object.hasOwn(dados, key) && dados[key] !== undefined) values[column] = dados[key];
       }
 
-    } else if (secao === 'sobre') {
-      const [existe] = await pool.query('SELECT * FROM tb_about LIMIT 1');
-      
+      if (existe.length === 0 || dados.imagem) values[config.image] = dados.imagem || null;
+      const columns = Object.keys(values);
+      const params = Object.values(values);
+
       if (existe.length === 0) {
         await pool.query(
-          'INSERT INTO tb_about (abt_titulo, abt_texto, abt_imagem) VALUES (?, ?, ?)', 
-          [dados.titulo, dados.texto, dados.imagem || null]
+          `INSERT INTO ${config.table} (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`,
+          params
         );
       } else {
-        let sql = 'UPDATE tb_about SET abt_titulo = ?, abt_texto = ?';
-        const params = [dados.titulo, dados.texto];
-        
-        if (dados.imagem) {
-          sql += ', abt_imagem = ?';
-          params.push(dados.imagem);
-        }
-        await pool.query(sql, params);
+        await pool.query(
+          `UPDATE ${config.table} SET ${columns.map(column => `${column} = ?`).join(', ')} WHERE ${config.id} = ?`,
+          [...params, existe[0][config.id]]
+        );
       }
-
     } else if (secao === 'contato') {
       const [existe] = await pool.query('SELECT * FROM tb_contato LIMIT 1');
       

@@ -68,6 +68,6 @@ No login, o perfil permanece em `resposta.utilizador` e o token em `resposta.tok
 
 A sidebar deve usar o perfil do usuário autenticado, escolher os campos ingleses ao selecionar EN (com retorno aos campos PT se estiverem vazios) e resolver a foto na raiz da API, em `/uploads/`. Se o painel guarda o perfil no navegador, saia e entre novamente após atualizar a API para obter os novos campos.
 
-O código da sidebar não está presente nos repositórios disponíveis nesta tarefa. Estes ajustes preparam seus dados; a ligação e a exibição do componente ainda precisam ser conferidas no código do painel.
+O componente da sidebar foi posteriormente fornecido no chat. A versão corrigida está em `integracao-painel/Sidebar.vue` na raiz deste repositório; siga `integracao-painel/LEIA-ME.md` para substituir o componente e atualizar a API com a rota autenticada `GET /api/perfil`.
 
 Verificação do perfil público: `node --test tests/user-profile.test.js` dentro de `andora-back`. O cadastro e o login também foram validados por requisições reais contra MySQL temporário com o modelo bilíngue e contra o esquema antigo sem colunas inglesas.

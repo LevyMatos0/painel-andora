@@ -17,6 +17,11 @@ export function publicUser(row) {
 }
 
 export const UserService = {
+  async buscarPorId(id) {
+    const [rows] = await pool.query('SELECT * FROM tb_user WHERE usr_codigo = ?', [id]);
+    return rows[0] ? publicUser(rows[0]) : null;
+  },
+
   async listarTodos() {
     const sql = 'SELECT * FROM tb_user';
     const [linhas] = await pool.query(sql);

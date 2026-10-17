@@ -1,6 +1,30 @@
 import { UserService } from '../services/user.service.js';
 
 export const UserController = {
+  async perfil(req, res, next) {
+    try {
+      const usuario = await UserService.buscarPorId(req.utilizador.id);
+      if (!usuario) return res.status(404).json({ mensagem: 'Usuário não encontrado.' });
+      res.set('Cache-Control', 'no-store');
+      // Keep the usr_* names used by the existing Sidebar.vue, alongside the
+      // normalized fields used by login and user management.
+      return res.json({
+        ...usuario,
+        usr_codigo: usuario.id,
+        usr_nome: usuario.nome,
+        usr_email: usuario.email,
+        usr_telefone: usuario.telefone,
+        usr_cargo: usuario.cargo,
+        usr_cargo_ingles: usuario.cargo_ingles,
+        usr_foto: usuario.foto,
+        usr_bio: usuario.bio,
+        usr_bio_ingles: usuario.bio_ingles,
+      });
+    } catch (erro) {
+      next(erro);
+    }
+  },
+
   async listar(req, res, next) {
     try {
       const usuarios = await UserService.listarTodos();

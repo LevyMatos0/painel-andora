@@ -1,10 +1,11 @@
 import multer from 'multer';
 import path from 'path';
+import { mkdir } from 'node:fs';
 
 // Configura o destino e o nome do arquivo
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/'); // A pasta 'uploads/' deve existir na raiz do backend
+    mkdir('uploads', { recursive: true }, erro => cb(erro, 'uploads/'));
   },
   filename: function (req, file, cb) {
     // Cria um nome único para evitar sobreposição de arquivos com o mesmo nome

@@ -6,6 +6,7 @@ export const TeamController = {
       const membros = await TeamService.listarTodos();
       return res.status(200).json(membros);
     } catch (erro) {
+      if (erro.status === 400) return res.status(400).json({ mensagem: erro.message });
       next(erro);
     }
   },
@@ -22,6 +23,7 @@ export const TeamController = {
       const novo = await TeamService.criar(dados);
       return res.status(201).json(novo);
     } catch (erro) {
+      if (erro.status === 400) return res.status(400).json({ mensagem: erro.message });
       next(erro);
     }
   },
@@ -36,8 +38,10 @@ export const TeamController = {
       }
 
       const atualizado = await TeamService.atualizar(req.params.id, dados);
+      if (!atualizado) return res.status(404).json({ mensagem: 'Membro não encontrado.' });
       return res.status(200).json(atualizado);
     } catch (erro) {
+      if (erro.status === 400) return res.status(400).json({ mensagem: erro.message });
       next(erro);
     }
   },
@@ -47,6 +51,7 @@ export const TeamController = {
       await TeamService.excluir(req.params.id);
       return res.status(200).json({ mensagem: 'Membro removido' });
     } catch (erro) {
+      if (erro.status === 400) return res.status(400).json({ mensagem: erro.message });
       next(erro);
     }
   }

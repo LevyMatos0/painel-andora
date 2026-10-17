@@ -10,6 +10,8 @@ router.use(verificarToken);
 
 router.get('/', UserController.listar);
 router.post('/', upload.single('foto'), UserController.criar);
+router.put('/:id', UserController.validarProprioPerfil, upload.single('foto'), UserController.atualizarPerfil);
+router.patch('/:id', UserController.validarProprioPerfil, upload.single('foto'), UserController.atualizarPerfil);
 router.delete('/:id', UserController.remover);
 
 export default router;

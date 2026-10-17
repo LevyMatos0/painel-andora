@@ -71,3 +71,10 @@ A sidebar deve usar o perfil do usuário autenticado, escolher os campos inglese
 O componente da sidebar foi posteriormente fornecido no chat. A versão corrigida está em `integracao-painel/Sidebar.vue` na raiz deste repositório; siga `integracao-painel/LEIA-ME.md` para substituir o componente e atualizar a API com a rota autenticada `GET /api/perfil`.
 
 Verificação do perfil público: `node --test tests/user-profile.test.js` dentro de `andora-back`. O cadastro e o login também foram validados por requisições reais contra MySQL temporário com o modelo bilíngue e contra o esquema antigo sem colunas inglesas.
+
+
+## Atualização de usuário, serviços e equipe
+
+A correção mais recente implementa `PUT`/`PATCH /api/perfil` para salvar o próprio usuário, além de `PUT`/`PATCH /api/users/:id` restritos ao próprio ID autenticado. Serviços e equipe também gravam os campos ingleses na criação e edição. As edições são parciais e preservam fotos e traduções omitidas.
+
+Há um novo módulo obrigatório, `src/utils/persistence.js`. Siga **CORRECAO-USUARIO-SERVICOS-EQUIPE.md** nesta pasta para instalar o conjunto completo de arquivos e conferir os campos aceitos pelos formulários. Não basta copiar apenas um serviço isolado desta versão.

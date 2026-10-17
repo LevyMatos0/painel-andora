@@ -1,5 +1,6 @@
 import { pool } from '../config/database.js';
 import bcrypt from 'bcryptjs';
+import { badRequest, pickFields, validateText } from '../utils/persistence.js';
 
 // Shared by listing, registration and login. Never return the password hash.
 export function publicUser(row) {
@@ -61,5 +62,33 @@ export const UserService = {
   async excluir(id) {
     const [res] = await pool.query('DELETE FROM tb_user WHERE usr_codigo = ?', [id]);
     return res.affectedRows > 0;
+  },
+
+  async atualizar(id, dados) {
+    const fields = pickFields(dados, {
+      usr_nome: ['nome', 'usr_nome'],
+      usr_email: ['email', 'usr_email'],
+      usr_telefone: ['telefone', 'usr_telefone'],
+      usr_cargo: ['cargo', 'usr_cargo'],
+      usr_cargo_ingles: ['cargo_ingles', 'usr_cargo_ingles'],
+      usr_bio: ['bio', 'usr_bio'],
+      usr_bio_ingles: ['bio_ingles', 'usr_bio_ingles'],
+      usr_foto: ['foto', 'usr_foto'],
+    });
+    validateText(fields, ['usr_nome', 'usr_email', 'usr_cargo']);
+    if (fields.usr_email) fields.usr_email = fields.usr_email.trim();
+    if (fields.usr_foto === '') delete fields.usr_foto;
+    const password = Object.hasOwn(dados, 'senha') ? dados.senha : dados.usr_senha;
+    if (password != null && password !== '') {
+      if (typeof password !== 'string') throw badRequest('A senha deve ser texto.');
+      fields.usr_senha = await bcrypt.hash(password, 10);
+    }
+    if (!Object.keys(fields).length) throw badRequest('Nenhum campo de perfil foi enviado para atualização.');
+    if (!await this.buscarPorId(id)) return null;
+    await pool.query(
+      `UPDATE tb_user SET ${Object.keys(fields).map(column => `${column} = ?`).join(', ')} WHERE usr_codigo = ?`,
+      [...Object.values(fields), id]
+    );
+    return this.buscarPorId(id);
   }
 };

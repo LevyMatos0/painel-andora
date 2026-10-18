@@ -1,0 +1,16 @@
+node_modules/
+.env
+.env.local
+.sites-runtime/
+
+dist/
+*.local
+
+.vite/
+.vscode/
+
+# Configurações locais e segredos
+.env.*
+!.env.example
+coverage/
+*.log

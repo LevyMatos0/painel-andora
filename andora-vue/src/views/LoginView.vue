@@ -47,11 +47,7 @@ async function entrar() {
 <template>
   <main class="login-page">
     <section class="login-art">
-      <img
-        class="login-logo"
-        :src="logo"
-        alt="Andora Desenvolvimento de Sistemas"
-      />
+
       <div class="login-message">
         <p class="eyebrow" style="color: var(--brand-yellow)">
           Gestão de conteúdo
@@ -59,7 +55,7 @@ async function entrar() {
         <h1>Seu site, sob controle.</h1>
         <p>
           Atualize textos, imagens, serviços e informações da Andora em um
-          painel organizado e preparado para Vue.js e MySQL.
+          painel organizado e preparado.
         </p>
       </div>
       <small>© 2026 Andora Desenvolvimento de Sistemas</small>

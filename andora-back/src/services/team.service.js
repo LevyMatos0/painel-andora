@@ -1,72 +1,60 @@
 import { pool } from '../config/database.js';
+import { badRequest, normalizeActive, normalizeOrder, pickFields, validateText } from '../utils/persistence.js';
+
+function teamFields(dados, create = false) {
+  const fields = pickFields(dados, {
+    tms_nome: ['nome', 'tms_nome'],
+    tms_cargo: ['cargo', 'tms_cargo'],
+    tms_cargo_ingles: ['cargo_ingles', 'tms_cargo_ingles'],
+    tms_apresentacao: ['texto', 'apresentacao', 'tms_apresentacao'],
+    tms_apresentacao_ingles: ['texto_ingles', 'apresentacao_ingles', 'tms_apresentacao_ingles'],
+    tms_linkedin: ['linkedin', 'tms_linkedin'],
+    tms_github: ['github', 'tms_github'],
+    tms_imagem: ['foto', 'imagem', 'tms_imagem'],
+  });
+  if (create) {
+    if (!Object.hasOwn(fields, 'tms_nome') || !Object.hasOwn(fields, 'tms_cargo')) {
+      throw badRequest('Nome e cargo são obrigatórios.');
+    }
+    fields.tms_apresentacao ??= '';
+    fields.tms_linkedin ??= '';
+    fields.tms_github ??= '';
+    fields.tms_imagem ??= '';
+  } else if (fields.tms_imagem == null || fields.tms_imagem === '') delete fields.tms_imagem;
+  if (Object.hasOwn(fields, 'tms_apresentacao') && fields.tms_apresentacao === null) fields.tms_apresentacao = '';
+  validateText(fields, ['tms_nome', 'tms_cargo']);
+  const flags = pickFields(dados, { ordem: ['ordem', 'tms_ordem'], status: ['status', 'tms_status'] });
+  if (Object.hasOwn(flags, 'ordem') || create) fields.tms_ordem = normalizeOrder(flags.ordem);
+  if (Object.hasOwn(flags, 'status') || create) fields.tms_status = normalizeActive(Object.hasOwn(flags, 'status') ? flags.status : true);
+  return fields;
+}
 
 export const TeamService = {
   async listarTodos() {
-    // Força a listar sempre respeitando a ordem
     const [linhas] = await pool.query('SELECT * FROM tb_team ORDER BY tms_ordem ASC');
     return linhas;
   },
 
   async criar(dados) {
-    const nomeImagem = dados.foto || dados.imagem || '';
-    
-    // CONVERSÃO BLINDADA: Garante que vira o número 1 ou 0 para o MySQL
-    const isAtivo = (String(dados.status) === '1' || String(dados.status) === 'true' || dados.status === true) ? 1 : 0;
-    const ordemVal = (dados.ordem !== undefined && dados.ordem !== '') ? Number(dados.ordem) : 1;
-
-    const sql = `
-      INSERT INTO tb_team 
-      (tms_nome, tms_cargo, tms_apresentacao, tms_linkedin, tms_github, tms_imagem, tms_ordem, tms_status) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-    
-    const params = [
-      dados.nome, 
-      dados.cargo, 
-      dados.texto || '', 
-      dados.linkedin || '', 
-      dados.github || '', 
-      nomeImagem,       
-      ordemVal, 
-      isAtivo
-    ];
-    
-    const [resultado] = await pool.query(sql, params);
-    return { id: resultado.insertId, ...dados, foto: nomeImagem };
+    const fields = teamFields(dados, true);
+    const columns = Object.keys(fields);
+    const [resultado] = await pool.query(
+      `INSERT INTO tb_team (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`,
+      Object.values(fields)
+    );
+    return { id: resultado.insertId, ...dados, foto: fields.tms_imagem };
   },
 
   async atualizar(id, dados) {
-    const nomeImagem = dados.foto || dados.imagem;
-    
-    // CONVERSÃO BLINDADA NO UPDATE TAMBÉM
-    const isAtivo = (String(dados.status) === '1' || String(dados.status) === 'true' || dados.status === true) ? 1 : 0;
-    const ordemVal = (dados.ordem !== undefined && dados.ordem !== '') ? Number(dados.ordem) : 1;
-
-    let sql = `
-      UPDATE tb_team 
-      SET tms_nome = ?, tms_cargo = ?, tms_apresentacao = ?, tms_linkedin = ?, tms_github = ?, tms_ordem = ?, tms_status = ?
-    `;
-    
-    const params = [
-      dados.nome, 
-      dados.cargo, 
-      dados.texto || '', 
-      dados.linkedin || '', 
-      dados.github || '',
-      ordemVal,
-      isAtivo // O MySQL vai receber exatamente 1 ou 0
-    ];
-    
-    if (nomeImagem) {
-      sql += `, tms_imagem = ?`;
-      params.push(nomeImagem);
-    }
-    
-    sql += ` WHERE tms_codigo = ?`;
-    params.push(id);
-
-    await pool.query(sql, params);
-    return { id, ...dados, foto: nomeImagem || undefined };
+    const fields = teamFields(dados);
+    if (!Object.keys(fields).length) throw badRequest('Nenhum campo de equipe foi enviado para atualização.');
+    const [existing] = await pool.query('SELECT tms_codigo FROM tb_team WHERE tms_codigo = ?', [id]);
+    if (!existing.length) return null;
+    await pool.query(
+      `UPDATE tb_team SET ${Object.keys(fields).map(column => `${column} = ?`).join(', ')} WHERE tms_codigo = ?`,
+      [...Object.values(fields), id]
+    );
+    return { id, ...dados, ...(fields.tms_imagem !== undefined ? { foto: fields.tms_imagem } : {}) };
   },
 
   async excluir(id) {

@@ -11,6 +11,7 @@ import teamRoutes from './routes/team.routes.js';
 import faqRoutes from './routes/faq.routes.js';
 import mensagemRoutes from './routes/mensagem.routes.js';
 import userRoutes from './routes/user.routes.js';
+import perfilRoutes from './routes/perfil.routes.js';
 
 // Carrega as variáveis de ambiente do ficheiro .env
 dotenv.config();
@@ -46,6 +47,7 @@ app.use('/api/team', teamRoutes);
 app.use('/api/faqs', faqRoutes);
 app.use('/api/mensagens', mensagemRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/perfil', perfilRoutes);
 
 // 6. Middleware Global de Tratamento de Erros
 // Evita que o servidor vá abaixo caso ocorra um erro não tratado num controller

@@ -1,26 +1,38 @@
-import multer from 'multer';
-import path from 'path';
-import { mkdir } from 'node:fs';
+import multer from "multer";
+import { mkdir } from "node:fs";
+import { randomUUID } from "node:crypto";
+import { config } from "../config/environment.js";
 
-// Configura o destino e o nome do arquivo
+const formats = new Map([
+  ["image/jpeg", ".jpg"],
+  ["image/png", ".png"],
+  ["image/webp", ".webp"],
+  ["image/gif", ".gif"],
+]);
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    mkdir('uploads', { recursive: true }, erro => cb(erro, 'uploads/'));
+  destination(req, file, cb) {
+    mkdir(config.uploadsDir, { recursive: true }, (error) =>
+      cb(error, config.uploadsDir),
+    );
   },
-  filename: function (req, file, cb) {
-    // Cria um nome único para evitar sobreposição de arquivos com o mesmo nome
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
+  filename(req, file, cb) {
+    cb(null, randomUUID() + formats.get(file.mimetype));
+  },
 });
-
-// Filtro opcional para aceitar apenas imagens
-const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image/')) {
-    cb(null, true);
-  } else {
-    cb(new Error('Formato de arquivo inválido. Envie apenas imagens.'));
-  }
-};
-
-export const upload = multer({ storage, fileFilter });
+export const upload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 1,
+    fields: 40,
+    fieldSize: 128 * 1024,
+  },
+  fileFilter(req, file, cb) {
+    if (formats.has(file.mimetype)) return cb(null, true);
+    const error = new Error(
+      "Envie uma imagem PNG, JPEG, WebP ou GIF de até 5 MB.",
+    );
+    error.status = 400;
+    cb(error);
+  },
+});

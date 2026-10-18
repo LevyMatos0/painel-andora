@@ -27,8 +27,8 @@ function serviceFields(dados, create = false) {
 }
 
 export const ServicoService = {
-  async listarTodos() {
-    const [linhas] = await pool.query('SELECT * FROM tb_servico ORDER BY srv_ordem ASC');
+  async listarTodos(somenteAtivos = false) {
+    const [linhas] = await pool.query(`SELECT * FROM tb_servico ${somenteAtivos ? 'WHERE srv_ativo = 1' : ''} ORDER BY srv_ordem ASC`);
     return linhas;
   },
 

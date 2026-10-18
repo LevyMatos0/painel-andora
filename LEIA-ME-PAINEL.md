@@ -1,6 +1,6 @@
 # Painel Andora atualizado — Windows
 
-Este pacote reúne o painel visual enviado no RAR, em `painel-visual`, e a API corrigida, em `andora-back`. O site público continua no repositório `LevyMatos0/Andora-vue`.
+Este pacote reúne o painel visual enviado no RAR, em `andora-vue`, e a API corrigida, em `andora-back`. O site público continua no repositório `LevyMatos0/Andora-vue`.
 
 ## Abrir no Windows
 
@@ -25,14 +25,14 @@ npm ci
 node src/server.js
 ```
 
-Abra outra janela da mesma maneira, agora dentro da pasta `painel-visual`:
+Abra outra janela da mesma maneira, agora dentro da pasta `andora-vue`:
 
 ```bat
 npm ci
 npm run dev
 ```
 
-API: porta **3000**. Painel: **5173**. Site público, quando iniciado separadamente: **5174**. Se precisar de outra porta para a API, configure `PORT` no `.env` da API e `VITE_API_URL` no `.env` do painel conforme `painel-visual/.env.example`; reinicie ambos.
+API: porta **3000**. Painel: **5173**. Site público, quando iniciado separadamente: **5174**. Se precisar de outra porta para a API, configure `PORT` no `.env` da API e `VITE_API_URL` no `.env` do painel conforme `andora-vue/.env.example`; reinicie ambos.
 
 ## O que mudou
 
@@ -46,10 +46,16 @@ API: porta **3000**. Painel: **5173**. Site público, quando iniciado separadame
 
 ## Verificação realizada
 
-Build de produção do painel e seis testes existentes da API passaram. Testes em navegador com a API real e um MySQL temporário separado validaram login; perfil sem ID no cache; persistência PT/EN; upload e remoção de foto; sidebar; senha; cadastro de serviço/equipe em inglês; dashboard; mensagens; falhas visíveis; navegação e largura das seis telas em 320, 390, 768 e 1440 px.
+Build de produção do painel e 18 testes da API passaram. Testes em navegador com a API real e um MySQL temporário separado validaram login; perfil sem ID no cache; persistência PT/EN; upload e remoção de foto; sidebar; senha; cadastro de serviço/equipe em inglês; dashboard; mensagens; falhas visíveis; navegação e largura das seis telas em 320, 390, 768 e 1440 px.
 
 Os iniciadores `.cmd` são atalhos para os comandos acima. Foram escritos para Windows; a validação automatizada foi executada em Linux, com Chromium, Node e MySQL. Seu banco local não foi acessado nem modificado nesses testes.
 
 ## Receber contatos no Gmail
 
 A API pode avisar por e-mail quando um contato é recebido pelo site. Veja **[CONTATO-GMAIL.md](andora-back/CONTATO-GMAIL.md)** para ativar o envio para `tcc2026clm@gmail.com` com uma senha de app do Google. Após atualizar esta API, execute `npm ci` em `andora-back` para instalar a dependência de e-mail, mesmo se já houver `node_modules`.
+
+## Publicar na internet
+
+Use **[HOSPEDAGEM.md](HOSPEDAGEM.md)** para configurar Vercel, API, MySQL, volume de imagens e e-mail.
+
+A API exige `JWT_SECRET` com pelo menos 32 caracteres, inclusive no ambiente local. Se sua chave anterior for curta ou um exemplo, gere uma nova chave conforme HOSPEDAGEM.md e faça login novamente.

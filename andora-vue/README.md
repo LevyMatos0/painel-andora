@@ -29,4 +29,4 @@ O conteúdo de `andora-vue.rar` está nesta pasta **andora-vue**, como arquivos 
 
 Se cadastrar este painel na Vercel, selecione **andora-vue** como **Root Directory**, **Vite** como framework, `npm run build` como Build Command e `dist` como Output Directory. Configure `VITE_API_URL` com a URL HTTPS da API terminando em `/api` antes do build. A hospedagem da API e do banco é separada. Na API, autorize o domínio do painel no CORS.
 
-A API em `andora-back` e o painel anterior em `painel-visual` foram preservados. Esta pasta contém o painel administrativo enviado no arquivo; o site público permanece no repositório `LevyMatos0/Andora-vue`.
+A API permanece em `andora-back`. Esta pasta contém o painel administrativo enviado no arquivo; o site público permanece no repositório `LevyMatos0/Andora-vue`.

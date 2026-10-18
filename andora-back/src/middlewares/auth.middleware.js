@@ -1,20 +1,28 @@
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
+import { config } from "../config/environment.js";
 
 export function verificarToken(req, res, next) {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ mensagem: 'Acesso negado. Token não fornecido.' });
-  }
-
-  const token = authHeader.split(' ')[1];
-  const secret = process.env.JWT_SECRET || 'chave_super_secreta_andora';
-
+  const header = req.headers.authorization;
+  if (!header?.startsWith("Bearer "))
+    return res
+      .status(401)
+      .json({ mensagem: "Acesso negado. Token não fornecido." });
   try {
-    const payload = jwt.verify(token, secret);
-    req.utilizador = payload; // Guarda os dados do utilizador na requisição
+    const payload = jwt.verify(header.slice(7), config.jwtSecret, {
+      algorithms: ["HS256"],
+    });
+    if (!payload || !Number.isInteger(payload.id) || payload.id <= 0)
+      throw Error("Invalid subject");
+    req.utilizador = payload;
+    res.set("Cache-Control", "no-store");
     next();
-  } catch (erro) {
-    return res.status(401).json({ mensagem: 'Token inválido ou expirado.' });
+  } catch {
+    return res.status(401).json({ mensagem: "Token inválido ou expirado." });
   }
+}
+
+// Public content can be read anonymously; a logged-in panel may also see drafts.
+export function identificarToken(req, res, next) {
+  if (!req.headers.authorization) return next();
+  return verificarToken(req, res, next);
 }

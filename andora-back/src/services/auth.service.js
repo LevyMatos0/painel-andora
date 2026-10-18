@@ -1,6 +1,7 @@
 import { pool } from '../config/database.js';
 import bcrypt from 'bcryptjs'; // <-- Deve ser bcryptjs
 import jwt from 'jsonwebtoken';
+import { config } from '../config/environment.js';
 import { publicUser } from './user.service.js';
 
 export const AuthService = {
@@ -22,11 +23,11 @@ export const AuthService = {
       throw new Error('Credenciais inválidas.');
     }
 
-    const secret = process.env.JWT_SECRET || 'chave_super_secreta_andora';
+    const secret = config.jwtSecret;
     const token = jwt.sign(
       { id: utilizador.usr_codigo, cargo: utilizador.usr_cargo },
       secret,
-      { expiresIn: '24h' }
+      { expiresIn: '24h', algorithm: 'HS256' }
     );
 
     return { token, utilizador: publicUser(utilizador) };

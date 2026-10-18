@@ -3,7 +3,7 @@ import { ServicoService } from '../services/servico.service.js';
 export const ServicoController = {
   async listar(req, res, next) {
     try {
-      const servicos = await ServicoService.listarTodos();
+      const servicos = await ServicoService.listarTodos(!req.utilizador);
       return res.status(200).json(servicos);
     } catch (erro) {
       if (erro.status === 400) return res.status(400).json({ mensagem: erro.message });

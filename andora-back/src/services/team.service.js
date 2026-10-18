@@ -30,8 +30,8 @@ function teamFields(dados, create = false) {
 }
 
 export const TeamService = {
-  async listarTodos() {
-    const [linhas] = await pool.query('SELECT * FROM tb_team ORDER BY tms_ordem ASC');
+  async listarTodos(somenteAtivos = false) {
+    const [linhas] = await pool.query(`SELECT * FROM tb_team ${somenteAtivos ? 'WHERE tms_status = 1' : ''} ORDER BY tms_ordem ASC`);
     return linhas;
   },
 

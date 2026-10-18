@@ -91,10 +91,7 @@ export const UserService = {
     if (fields.usr_email) fields.usr_email = fields.usr_email.trim();
     if (fields.usr_foto === '') delete fields.usr_foto;
     const password = Object.hasOwn(dados, 'senha') ? dados.senha : dados.usr_senha;
-    if (password != null && password !== '') {
-      if (typeof password !== 'string') throw badRequest('A senha deve ser texto.');
-      fields.usr_senha = await bcrypt.hash(password, 10);
-    }
+    if (password != null && password !== '') throw badRequest('Para trocar a senha, use /api/perfil/senha e informe a senha atual.');
     if (!Object.keys(fields).length) throw badRequest('Nenhum campo de perfil foi enviado para atualização.');
     if (!await this.buscarPorId(id)) return null;
     await pool.query(

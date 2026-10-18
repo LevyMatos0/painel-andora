@@ -1,67 +1,112 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
+import express from "express";
+import cors from "cors";
+import { config } from "./config/environment.js";
+import { pool } from "./config/database.js";
+import { checkSchema } from "./config/schema.js";
+import { createLimits } from "./middlewares/rate-limit.js";
+import authRoutes from "./routes/auth.routes.js";
+import dashboardRoutes from "./routes/dashboard.routes.js";
+import siteRoutes from "./routes/site.routes.js";
+import servicoRoutes from "./routes/servico.routes.js";
+import teamRoutes from "./routes/team.routes.js";
+import faqRoutes from "./routes/faq.routes.js";
+import mensagemRoutes from "./routes/mensagem.routes.js";
+import userRoutes from "./routes/user.routes.js";
+import perfilRoutes from "./routes/perfil.routes.js";
 
-// Importação de todas as rotas do sistema
-import authRoutes from './routes/auth.routes.js';
-import dashboardRoutes from './routes/dashboard.routes.js';
-import siteRoutes from './routes/site.routes.js';
-import servicoRoutes from './routes/servico.routes.js';
-import teamRoutes from './routes/team.routes.js';
-import faqRoutes from './routes/faq.routes.js';
-import mensagemRoutes from './routes/mensagem.routes.js';
-import userRoutes from './routes/user.routes.js';
-import perfilRoutes from './routes/perfil.routes.js';
-
-// Carrega as variáveis de ambiente do ficheiro .env
-dotenv.config();
-
-const app = express();
-
-// 1. Configuração do CORS (Segurança e comunicação com o Frontend)
-app.use(cors({
-  origin: [
-    'http://localhost:5173',          // Frontend em ambiente de desenvolvimento (Vite)
-    'https://levymatos0.github.io',   // Caso mantenha algo no GitHub Pages temporariamente
-    'https://andora.com.br',          // O seu futuro domínio oficial
-    'https://www.andora.com.br'
-  ],
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  credentials: true
-}));
-
-// 2. Middlewares de formatação
-app.use(express.json()); // Permite que o Node.js compreenda JSON no corpo das requisições
-app.use(express.urlencoded({ extended: true })); // Permite receber dados de formulários tradicionais
-
-// 3. Ficheiros Estáticos (Torna a pasta 'uploads' pública para o frontend carregar as imagens)
-// Sempre que o Vue pedir http://localhost:3000/uploads/imagem.jpg, o Express entrega o ficheiro
-app.use('/uploads', express.static('uploads'));
-
-// 4. Registo das Rotas da API
-app.use('/api/auth', authRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/site', siteRoutes);
-app.use('/api/servicos', servicoRoutes);
-app.use('/api/team', teamRoutes);
-app.use('/api/faqs', faqRoutes);
-app.use('/api/mensagens', mensagemRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/perfil', perfilRoutes);
-
-// 5. Middleware Global de Tratamento de Erros
-// Captura qualquer "next(erro)" enviado pelos controllers para evitar que o servidor vá abaixo
-app.use((err, req, res, next) => {
-  console.error('Erro interno:', err);
-  res.status(500).json({ 
-    mensagem: 'Ocorreu um erro interno no servidor.',
-    detalhe: process.env.NODE_ENV === 'development' ? err.message : undefined
+export function createApp({ settings = config, database = pool } = {}) {
+  const app = express();
+  const limits = createLimits();
+  app.disable("x-powered-by");
+  app.set("trust proxy", settings.trustProxy);
+  app.use((req, res, next) => {
+    res.set({
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "X-Frame-Options": "DENY",
+    });
+    next();
   });
-});
-
-// 6. Iniciar o Servidor
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor Backend a correr na porta ${PORT}`);
-  console.log(`Pode testar em: http://localhost:${PORT}/api/dashboard`);
-});
+  app.use(
+    cors({
+      origin(origin, cb) {
+        if (!origin || settings.origins.includes(origin)) return cb(null, true);
+        const error = new Error("Origem não autorizada.");
+        error.status = 403;
+        cb(error);
+      },
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+      maxAge: 600,
+    }),
+  );
+  app.use(express.json({ limit: "128kb" }));
+  app.use(express.urlencoded({ extended: false, limit: "128kb" }));
+  app.get("/health", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    try {
+      await checkSchema(database);
+      res.json({ status: "ok" });
+    } catch {
+      res.status(503).json({ status: "unavailable" });
+    }
+  });
+  app.use(
+    "/uploads",
+    express.static(settings.uploadsDir, {
+      dotfiles: "deny",
+      index: false,
+      maxAge: "1d",
+    }),
+  );
+  app.use("/api", (req, res, next) => {
+    res.set("Cache-Control", "no-store");
+    next();
+  });
+  app.use("/api/auth/login", limits.login);
+  app.use("/api/mensagens", (req, res, next) =>
+    req.method === "POST" ? limits.contact(req, res, next) : next(),
+  );
+  app.use("/api/auth", authRoutes);
+  app.use("/api/dashboard", dashboardRoutes);
+  app.use("/api/site", siteRoutes);
+  app.use("/api/servicos", servicoRoutes);
+  app.use("/api/team", teamRoutes);
+  app.use("/api/faqs", faqRoutes);
+  app.use("/api/mensagens", mensagemRoutes);
+  app.use("/api/users", userRoutes);
+  app.use("/api/perfil", perfilRoutes);
+  app.use((req, res) =>
+    res.status(404).json({ mensagem: "Rota não encontrada." }),
+  );
+  app.use((error, req, res, next) => {
+    const tooLarge =
+      error.code === "LIMIT_FILE_SIZE" || error.type === "entity.too.large";
+    const status = tooLarge
+      ? 413
+      : error.name === "MulterError"
+        ? 400
+        : Number.isInteger(error.status) &&
+            error.status >= 400 &&
+            error.status < 500
+          ? error.status
+          : 500;
+    if (status === 500)
+      console.error(
+        "Falha interna da API:",
+        /^[A-Z0-9_]+$/.test(error.code || "") ? error.code : "INTERNAL_ERROR",
+      );
+    const mensagem = tooLarge
+      ? "O arquivo ou os dados excedem o tamanho permitido. Imagens: até 5 MB."
+      : status === 500
+        ? "Ocorreu um erro interno no servidor."
+        : error.type === "entity.parse.failed"
+          ? "Envie um JSON válido."
+          : error.name === "MulterError"
+            ? "Upload inválido. Envie uma imagem por vez, com até 5 MB."
+            : error.message;
+    res.status(status).json({ mensagem });
+  });
+  return app;
+}
+export default createApp();

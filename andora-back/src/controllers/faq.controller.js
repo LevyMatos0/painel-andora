@@ -3,7 +3,7 @@ import { FaqService } from '../services/faq.service.js';
 export const FaqController = {
   async listar(req, res, next) {
     try {
-      const somenteAtivos = req.query.ativos === 'true';
+      const somenteAtivos = !req.utilizador || req.query.ativos === 'true';
       const faqs = await FaqService.listarTodos(somenteAtivos);
       return res.status(200).json(faqs);
     } catch (erro) {

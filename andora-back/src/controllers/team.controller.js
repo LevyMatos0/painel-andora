@@ -3,7 +3,7 @@ import { TeamService } from '../services/team.service.js';
 export const TeamController = {
   async listar(req, res, next) {
     try {
-      const membros = await TeamService.listarTodos();
+      const membros = await TeamService.listarTodos(!req.utilizador);
       return res.status(200).json(membros);
     } catch (erro) {
       if (erro.status === 400) return res.status(400).json({ mensagem: erro.message });

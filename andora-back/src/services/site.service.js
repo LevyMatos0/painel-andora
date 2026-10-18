@@ -71,7 +71,7 @@ export const SiteService = {
         if (Object.hasOwn(dados, key) && dados[key] !== undefined) values[column] = dados[key];
       }
 
-      if (existe.length === 0 || dados.imagem) values[config.image] = dados.imagem || null;
+      if (existe.length === 0 || dados.imagem) values[config.image] = dados.imagem || '';
       const columns = Object.keys(values);
       const params = Object.values(values);
 
